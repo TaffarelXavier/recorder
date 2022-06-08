@@ -1,38 +1,55 @@
-<!DOCTYPE html>
+<!DOCTYPE html lang="pt-br">
 
 <head>
     <title>
         Recorder v2.2
     </title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <style>
+        .container {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+            height: 100vh;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="container mt-3">
-    <span><a id="download" style="display: none;"><button type="button" class="btn btn-primary mb-4"> Download</button></a></span>
-    <button type="button" class="btn btn-danger" id="stop" disabled>Stop</button>
-    <button type="button" onclick="recordAudio()" class="btn btn-info">Record Audio</button>
-    <button type="button" onclick="recordVideo()" class="btn btn-info">Record Video</button>
-    <button type="button" onclick="recordScreen()" class="btn btn-info">Record Screen</button>
-    <div class="p-5">
-        <video autoplay height='480' width="640" muted></video>
-    </div>
+    <div class="container text-center">
+        <span><a id="download" style="display: none;"><button type="button" class="btn btn-primary mb-4">
+                    Download</button></a></span>
+        <button type="button" class="btn btn-danger" id="stop" disabled>Stop</button>
+        <button type="button" onclick="recordAudio()" class="btn btn-info">Record Audio</button>
+        <button type="button" onclick="recordVideo()" class="btn btn-info">Record Video</button>
+        <button type="button" onclick="recordScreen()" class="btn btn-info">Record Screen</button>
+        <div class="p-5">
+            <video autoplay height='480' width="640" muted></video>
+        </div>
     </div>
 </body>
 <script>
+
+    window.onbeforeunload = function(){
+        return false;
+    }
     let shouldStop = false;
     let stopped = false;
     const videoElement = document.getElementsByTagName("video")[0];
     const downloadLink = document.getElementById('download');
     const stopButton = document.getElementById('stop');
+
     function startRecord() {
         $('.btn-info').prop('disabled', true);
         $('#stop').prop('disabled', false);
         $('#download').css('display', 'none')
     }
+
     function stopRecord() {
         $('.btn-info').prop('disabled', false);
         $('#stop').prop('disabled', true);
@@ -46,7 +63,10 @@
         shouldStop = true;
     });
 
-    const handleRecord = function ({stream, mimeType}) {
+    const handleRecord = function ({
+        stream,
+        mimeType
+    }) {
         startRecord()
         let recordedChunks = [];
         stopped = false;
@@ -81,8 +101,13 @@
     async function recordAudio() {
         const mimeType = 'audio/webm';
         shouldStop = false;
-        const stream = await navigator.mediaDevices.getUserMedia({audio: audioRecordConstraints});
-        handleRecord({stream, mimeType})
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: audioRecordConstraints
+        });
+        handleRecord({
+            stream,
+            mimeType
+        })
     }
 
     async function recordVideo() {
@@ -105,7 +130,10 @@
         };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         videoElement.srcObject = stream;
-        handleRecord({stream, mimeType})
+        handleRecord({
+            stream,
+            mimeType
+        })
     }
 
     async function recordScreen() {
@@ -116,31 +144,49 @@
                 cursor: 'motion'
             }
         };
-        if(!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)) {
+        if (!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)) {
             return window.alert('Screen Record not supported!')
         }
         let stream = null;
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({video: {cursor: "motion"}, audio: {'echoCancellation': true}});
-        if(window.confirm("Record audio with screen?")){
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+                cursor: "motion"
+            },
+            audio: {
+                'echoCancellation': true
+            }
+        });
+        if (window.confirm("Record audio with screen?")) {
             const audioContext = new AudioContext();
 
-            const voiceStream = await navigator.mediaDevices.getUserMedia({ audio: {'echoCancellation': true}, video: false });
+            const voiceStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    'echoCancellation': true
+                },
+                video: false
+            });
             const userAudio = audioContext.createMediaStreamSource(voiceStream);
-            
+
             const audioDestination = audioContext.createMediaStreamDestination();
             userAudio.connect(audioDestination);
 
-            if(displayStream.getAudioTracks().length > 0) {
+            if (displayStream.getAudioTracks().length > 0) {
                 const displayAudio = audioContext.createMediaStreamSource(displayStream);
                 displayAudio.connect(audioDestination);
             }
 
             const tracks = [...displayStream.getVideoTracks(), ...audioDestination.stream.getTracks()]
             stream = new MediaStream(tracks);
-            handleRecord({stream, mimeType})
+            handleRecord({
+                stream,
+                mimeType
+            })
         } else {
             stream = displayStream;
-            handleRecord({stream, mimeType});
+            handleRecord({
+                stream,
+                mimeType
+            });
         };
         videoElement.srcObject = stream;
     }
